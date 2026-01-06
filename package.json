@@ -1,0 +1,26 @@
+{
+  "name": "birthday",
+  "version": "1.0.0",
+  "description": "",
+  "main": "script.js",
+  "scripts": {
+    "preview": "serve ."
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/nebelsprachen/Birthday.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "bugs": {
+    "url": "https://github.com/nebelsprachen/Birthday/issues"
+  },
+  "homepage": "https://github.com/nebelsprachen/Birthday#readme",
+  "dependencies": {
+    "@mediapipe/camera_utils": "^0.3.1675466862",
+    "@mediapipe/hands": "^0.4.1675469240",
+    "serve": "^14.2.5"
+  }
+}

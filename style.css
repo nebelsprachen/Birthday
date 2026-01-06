@@ -41,6 +41,7 @@ body {
   height: 225px;
 }
 
+/* Webcam video element */
 #webcam {
   display: none;
 }
@@ -101,7 +102,7 @@ body {
   text-align: center;
 }
 
-// Confetti
+/* Confetti section */
 .confetti-container {
   position: fixed;
   top: 0;
@@ -117,7 +118,6 @@ body {
   position: absolute;
   top: -50px;
   font-size: 1.2rem;
-  color: #051fc2;
   opacity: 0;
   animation: confettiFall linear forwards;
 }
@@ -127,22 +127,27 @@ body {
     transform: translateY(0) translateX(0) rotate(0deg);
     opacity: 0;
   }
+
   5% {
     opacity: 1;
   }
+
   25% {
     transform: translateY(27vh) translateX(var(--sway, 20px)) rotate(180deg);
   }
+
   50% {
-    transform: translateY(55vh) translateX(calc(var(--sway, 20px) * -0.5))
-      rotate(360deg);
+    transform: translateY(55vh) translateX(calc(var(--sway, 20px) * -0.5)) rotate(360deg);
   }
+
   75% {
     transform: translateY(82vh) translateX(var(--sway, 20px)) rotate(540deg);
   }
+
   85% {
     opacity: 1;
   }
+
   100% {
     transform: translateY(110vh) translateX(0) rotate(720deg);
     opacity: 0;
