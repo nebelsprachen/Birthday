@@ -43,7 +43,6 @@ hands.onResults((results) => {
   ctx.drawImage(results.image, -canvas.width, 0, canvas.width, canvas.height);
   ctx.restore();
 
-  // Intentionally do NOT track finger / move match / light candles.
 });
 
 // Blow detection
