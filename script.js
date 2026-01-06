@@ -1,7 +1,10 @@
+// script.js
+
 const video = document.getElementById("webcam");
 const canvas = document.getElementById("canvas");
 const ctx = canvas.getContext("2d");
-const match = document.querySelector(".match");
+
+const match = document.querySelector(".match"); // can exist in HTML, we hide it
 const cakeArea = document.querySelector(".cake-area");
 const cakeImg = document.querySelector(".cake");
 
@@ -9,23 +12,19 @@ const cakeImg = document.querySelector(".cake");
 const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
 const WEBCAM_WIDTH = isMobile ? 240 : 300;
 const WEBCAM_HEIGHT = isMobile ? 180 : 225;
+
 const BLOW_THRESHOLD = 70; // how sensitive the mic is
-const LIGHT_DISTANCE = 20; // how close match needs to be to light candles
 
 canvas.width = WEBCAM_WIDTH;
 canvas.height = WEBCAM_HEIGHT;
 
-// Track hand position
-let handPosition = { x: 0.5, y: 0.5 };
-let isHandDetected = false;
-
-let isCakeLit = false;
+// State
+let isCakeLit = true; // START LIT
 let isCandlesBlownOut = false;
 
+// MediaPipe Hands (keep webcam overlay drawing, but no match logic)
 const hands = new Hands({
-  locateFile: (file) => {
-    return `https://cdn.jsdelivr.net/npm/@mediapipe/hands/${file}`;
-  },
+  locateFile: (file) => `https://cdn.jsdelivr.net/npm/@mediapipe/hands/${file}`,
 });
 
 hands.setOptions({
@@ -35,7 +34,7 @@ hands.setOptions({
   minTrackingConfidence: isMobile ? 0.4 : 0.5,
 });
 
-// Hand tracking
+// Hand tracking results (draw mirrored camera feed to canvas)
 hands.onResults((results) => {
   ctx.clearRect(0, 0, canvas.width, canvas.height);
 
@@ -44,131 +43,8 @@ hands.onResults((results) => {
   ctx.drawImage(results.image, -canvas.width, 0, canvas.width, canvas.height);
   ctx.restore();
 
-  if (results.multiHandLandmarks && results.multiHandLandmarks.length > 0) {
-    const landmarks = results.multiHandLandmarks[0];
-    isHandDetected = true;
-
-    // get index finger tip (landmark 8)
-    const indexTip = landmarks[8];
-
-    handPosition.x = 1 - indexTip.x;
-    handPosition.y = indexTip.y;
-
-    updateMatchPosition();
-
-    checkCandleLighting();
-  } else {
-    isHandDetected = false;
-  }
+  // Intentionally do NOT track finger / move match / light candles.
 });
-
-// Match
-function updateMatchPosition() {
-  if (!isHandDetected) return;
-
-  const cakeRect = cakeArea.getBoundingClientRect();
-
-  const padding = 20;
-  const matchX = padding + handPosition.x * (cakeRect.width - padding * 2 - 40);
-  const matchY =
-    padding + handPosition.y * (cakeRect.height - padding * 2 - 60);
-
-  match.style.left = `${matchX}px`;
-  match.style.top = `${matchY}px`;
-}
-
-// Light candles
-function checkCandleLighting() {
-  if (isCakeLit || isCandlesBlownOut) return;
-
-  const matchRect = match.getBoundingClientRect();
-  const cakeRect = cakeImg.getBoundingClientRect();
-
-  const matchTipX = matchRect.left + matchRect.width / 2;
-  const matchTipY = matchRect.top;
-
-  const candleX = cakeRect.left + cakeRect.width / 2;
-  const candleY = cakeRect.top + 10;
-
-  const distance = Math.sqrt(
-    Math.pow(matchTipX - candleX, 2) + Math.pow(matchTipY - candleY, 2)
-  );
-
-  if (distance < LIGHT_DISTANCE) {
-    lightCake();
-  }
-}
-
-function lightCake() {
-  if (isCakeLit) return;
-
-  isCakeLit = true;
-  cakeImg.src = "assets/cake_lit.gif";
-  match.style.display = "none";
-}
-
-function blowOutCandles() {
-  if (!isCakeLit || isCandlesBlownOut) return;
-
-  isCandlesBlownOut = true;
-  cakeImg.src = "assets/cake_unlit.gif";
-  createConfetti();
-}
-
-// ASCII Confetti
-const CONFETTI_SYMBOLS = [
-  "⭒",
-  "˚",
-  "⋆",
-  "⊹",
-  "₊",
-  "݁",
-  "˖",
-  "✦",
-  "✧",
-  "·",
-  "°",
-  "✶",
-];
-
-function createConfetti() {
-  const container = document.createElement("div");
-  container.className = "confetti-container";
-  document.body.appendChild(container);
-
-  const confettiCount = 80;
-
-  for (let i = 0; i < confettiCount; i++) {
-    setTimeout(() => {
-      const confetti = document.createElement("span");
-      confetti.className = "confetti";
-      confetti.textContent =
-        CONFETTI_SYMBOLS[Math.floor(Math.random() * CONFETTI_SYMBOLS.length)];
-
-      confetti.style.left = Math.random() * 100 + "vw";
-
-      confetti.style.fontSize = 0.8 + Math.random() * 1.2 + "rem";
-
-      const duration = 4 + Math.random() * 4;
-      confetti.style.animationDuration = duration + "s";
-
-      confetti.style.animationDelay = Math.random() * 0.5 + "s";
-
-      const swayAmount = (Math.random() - 0.5) * 100;
-      confetti.style.setProperty("--sway", swayAmount + "px");
-
-      container.appendChild(confetti);
-
-      setTimeout(() => {
-        confetti.remove();
-      }, (duration + 1) * 1000);
-    }, i * 50);
-  }
-
-  setTimeout(() => {
-    container.remove();
-  }, 15000);
-}
 
 // Blow detection
 let audioContext = null;
@@ -188,7 +64,6 @@ async function initBlowDetection() {
     microphone.connect(analyser);
 
     isBlowDetectionActive = true;
-
     detectBlow();
   } catch (err) {
     console.error("Error accessing microphone:", err);
@@ -208,6 +83,50 @@ function detectBlow() {
   }
 
   requestAnimationFrame(detectBlow);
+}
+
+function blowOutCandles() {
+  if (!isCakeLit || isCandlesBlownOut) return;
+
+  isCandlesBlownOut = true;
+  cakeImg.src = "assets/cake_unlit.gif"; // "blown out" state
+  createConfetti();
+}
+
+// ASCII Confetti
+const CONFETTI_SYMBOLS = ["⭒", "˚", "⋆", "⊹", "₊", "݁", "˖", "✦", "✧", "·", "°", "✶"];
+
+function createConfetti() {
+  const container = document.createElement("div");
+  container.className = "confetti-container";
+  document.body.appendChild(container);
+
+  const confettiCount = 80;
+
+  for (let i = 0; i < confettiCount; i++) {
+    setTimeout(() => {
+      const confetti = document.createElement("span");
+      confetti.className = "confetti";
+      confetti.textContent =
+        CONFETTI_SYMBOLS[Math.floor(Math.random() * CONFETTI_SYMBOLS.length)];
+
+      confetti.style.left = Math.random() * 100 + "vw";
+      confetti.style.fontSize = 0.8 + Math.random() * 1.2 + "rem";
+
+      const duration = 4 + Math.random() * 4;
+      confetti.style.animationDuration = duration + "s";
+      confetti.style.animationDelay = Math.random() * 0.5 + "s";
+
+      const swayAmount = (Math.random() - 0.5) * 100;
+      confetti.style.setProperty("--sway", swayAmount + "px");
+
+      container.appendChild(confetti);
+
+      setTimeout(() => confetti.remove(), (duration + 1) * 1000);
+    }, i * 50);
+  }
+
+  setTimeout(() => container.remove(), 15000);
 }
 
 // Camera
@@ -245,16 +164,22 @@ function startHandTracking() {
   camera.start();
 }
 
+// Start everything
 window.addEventListener("DOMContentLoaded", () => {
+  isCakeLit = true;
+  isCandlesBlownOut = false;
+
+  cakeImg.src = "assets/cake_lit.gif";
+
+  if (match) match.style.display = "none";
+
   initCamera();
 
   if (isMobile) {
     document.body.addEventListener(
       "click",
       () => {
-        if (!audioContext) {
-          initBlowDetection();
-        }
+        if (!audioContext) initBlowDetection();
       },
       { once: true }
     );
